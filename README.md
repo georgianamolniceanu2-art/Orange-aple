@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrangeApp</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f9f9f9; color: #333; padding-bottom: 70px; }
+
+        .admin-banner { display: none; background: #ffcc00; color: #000; padding: 10px; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 2px solid #e6b800; }
+
+        .top-navbar { display: flex; align-items: center; justify-content: space-between; background-color: #ffffff; padding: 10px 15px; border-bottom: 2px solid #ff6600; position: sticky; top: 0; z-index: 100; }
+        .logo-container { display: flex; align-items: center; gap: 8px; }
+        .play-icon { width: 35px; height: 35px; background-color: #ff6600; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .play-triangle { width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 10px solid #ffffff; margin-left: 2px; }
+        .logo-text { font-size: 18px; font-weight: bold; color: #ff6600; }
+
+        .search-container { display: flex; flex-grow: 1; max-width: 400px; margin: 0 10px; }
+        .search-input { width: 100%; padding: 8px 12px; border: 2px solid #ff6600; border-radius: 20px 0 0 20px; outline: none; }
+        .search-btn { background-color: #ff6600; color: white; border: 2px solid #ff6600; padding: 8px 15px; border-radius: 0 20px 20px 0; cursor: pointer; }
+
+        .page-content { display: none; padding: 15px; }
+        .page-content.active { display: block; }
+
+        .tiktok-feed { display: flex; flex-direction: column; align-items: center; gap: 20px; max-width: 400px; margin: 0 auto; }
+        .tiktok-card { width: 100%; height: 550px; background: #000; border-radius: 15px; overflow: hidden; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .tiktok-card video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .tiktok-overlay { position: absolute; bottom: 15px; left: 15px; color: white; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); z-index: 2; right: 60px; }
+        .tiktok-actions { position: absolute; right: 10px; bottom: 30px; display: flex; flex-direction: column; gap: 15px; align-items: center; z-index: 2; }
+        .action-btn { background: rgba(0,0,0,0.5); border: none; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
+        .action-btn span { font-size: 10px; font-weight: bold; margin-top: 2px; }
+
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 15px; }
+        .video-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: relative; }
+        .video-card video { width: 100%; height: 180px; background-color: #000; object-fit: cover; }
+        .video-info { padding: 10px; }
+
+        .upload-form, .admin-panel, .live-box { background: white; padding: 20px; border-radius: 10px; border: 1px solid #ff6600; max-width: 500px; margin: 15px auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
+        .submit-btn { width: 100%; background-color: #ff6600; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .live-btn { background-color: #e60000; color: white; }
+        .follow-btn { background-color: #ff6600; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-left: 10px; }
+        .follow-btn.following { background-color: #888; }
+        .ban-btn { background: #ff0000; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-top: 5px; font-weight: bold; display: none; }
+
+        .profile-header { position: relative; height: 160px; border-radius: 10px; background-color: #ff6600; background-size: cover; background-position: center; margin-bottom: 50px; }
+        .profile-avatar { width: 90px; height: 90px; border-radius: 50%; border: 4px solid white; position: absolute; bottom: -40px; left: 20px; background-size: cover; background-position: center; background-color: #ddd; }
+        .profile-stats { display: flex; gap: 20px; margin-top: 10px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        .stat-item { text-align: center; }
+        .stat-value { font-weight: bold; font-size: 16px; color: #ff6600; }
+        .stat-label { font-size: 12px; color: #666; }
+
+        .edit-profile-box { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-top: 15px; }
+
+        #cameraPreview { width: 100%; height: 300px; background: #000; border-radius: 10px; display: none; object-fit: cover; margin-top: 15px; }
+
+        .modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: 60%; background: white; z-index: 2000; border-radius: 20px 20px 0 0; padding: 15px; box-shadow: 0 -4px 10px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .comments-list { height: 70%; overflow-y: auto; margin: 10px 0; }
+        .comment-item { padding: 8px 0; border-bottom: 1px solid #eee; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background-color: #ffffff; border-top: 2px solid #ff6600; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #666; font-size: 11px; cursor: pointer; background: none; border: none; }
+        .nav-item.active { color: #ff6600; font-weight: bold; }
+        .create-btn { background-color: #ff6600; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        
+        #adminNavItem { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="adminLiveBanner" class="admin-banner"></div>
+
+    <div class="top-navbar">
+        <div class="logo-container">
+            <div class="play-icon"><div class="play-triangle"></div></div>
+            <span class="logo-text">OrangeApp</span>
+        </div>
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Caută videoclipuri...">
+            <button class="search-btn" onclick="searchVideos()">🔍</button>
+        </div>
+    </div>
+
+    <div id="home-page" class="page-content active">
+        <h2>🏠 Pagina Principală</h2>
+        <div class="video-grid" id="homeGrid"></div>
+    </div>
+
+    <div id="tiktok-page" class="page-content">
+        <h2 style="text-align: center; margin-bottom: 15px;">📱 Feed TikTok</h2>
+        <div class="tiktok-feed" id="tiktokGrid"></div>
+    </div>
+
+    <div id="youtube-page" class="page-content">
+        <h2>▶️ Videoclipuri Lungi (YouTube)</h2>
+        <div class="video-grid" id="youtubeGrid"></div>
+    </div>
+
+    <div id="create-page" class="page-content">
+        <h2>➕ Încarcă Videoclip sau Porneste Live</h2>
+        
+        <div class="live-box">
+            <h3>🔴 Dă drumul la Live</h3>
+            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Apasă butonul de mai jos pentru a porni camera!</p>
+            <button id="startLiveBtn" class="submit-btn live-btn" onclick="toggleCameraLive()">🎥 Pornește Camera pentru Live</button>
+            <video id="cameraPreview" autoplay playsinline muted></video>
+        </div>
+
+        <form class="upload-form" onsubmit="publishVideo(event)">
+            <h3>🎬 Postează un videoclip din Galerie</h3>
+            <div class="form-group" style="margin-top: 10px;">
+                <label>Titlu Videoclip</label>
+                <input type="text" id="videoTitle" required placeholder="Numele videoclipului">
+            </div>
+            <div class="form-group">
+                <label>Tip Videoclip</label>
+                <select id="videoType" required>
+                    <option value="tiktok">TikTok (Scurt/Vertical)</option>
+                    <option value="youtube">YouTube (Lung)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Alege Videoclip din Galerie</label>
+                <input type="file" id="videoFile" accept="video/*" required>
+            </div>
+            <button type="submit" class="submit-btn">Publică Videoclipul</button>
+        </form>
+    </div>
+
+    <div id="profile-page" class="page-content">
+        <div class="profile-header" id="profileBanner">
+            <div class="profile-avatar" id="profileAvatar"></div>
+        </div>
+        <div class="profile-details">
+            <h2 id="profileNameDisplay">Utilizator</h2>
+            <p style="color:#666; font-size:14px;" id="profileTag">@creator_orange</p>
+
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="followersCount">0</div>
+                    <div class="stat-label">Urmăritori</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="followingCount">0</div>
+                    <div class="stat-label">Urmărești</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="edit-profile-box">
+            <h3>Editează Profilul</h3>
+            <div class="form-group" style="margin-top:10px;">
+                <label>Schimbă Numele</label>
+                <input type="text" id="editNameInput" placeholder="Numele tău...">
+            </div>
+            <div class="form-group">
+                <label>Poza de Profil din Galerie</label>
+                <input type="file" id="avatarFileInput" accept="image/*" onchange="previewAvatar(event)">
+            </div>
+            <div class="form-group">
+                <label>Poza de Fundal (Banner) din Galerie</label>
+                <input type="file" id="bannerFileInput" accept="image/*" onchange="previewBanner(event)">
+            </div>
+            <button class="submit-btn" onclick="saveProfile()">Salvează Modificările</button>
+            <button class="submit-btn" onclick="loginAdminPrompt()" style="background: #333; margin-top: 15px;">🔐 Autentificare ca Admin</button>
+        </div>
+    </div>
+
+    <div id="admin-page" class="page-content">
+        <h2>⚙️ Panou Admin</h2>
+        <div class="admin-panel">
+            <h3>📢 Trimite Mesaj Live sus pe ecran</h3>
+            <div class="form-group" style="margin-top:10px;">
+                <textarea id="adminMessageInput" rows="2" placeholder="Ex: [ADMIN] Suntem Live!"></textarea>
+            </div>
+            <button class="submit-btn" onclick="broadcastAdminMessage()">Publică Mesaj</button>
+            <button class="submit-btn" onclick="clearAdminMessage()" style="background:#666; margin-top:5px;">Șterge Mesajul</button>
+            
+            <hr style="margin:20px 0;">
+            <h3>📊 Monitorizare</h3>
+            <p>🎬 Total Videoclipuri Încărcate: <b id="totalVideosCount">0</b></p>
+        </div>
+    </div>
+
+    <div class="modal" id="commentModal">
+        <div class="modal-header">
+            <h3>Comentarii</h3>
+            <button style="border:none; background:none; font-size:18px; cursor:pointer;" onclick="closeComments()">✖</button>
+        </div>
+        <div class="comments-list" id="commentsList"></div>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="newCommentInput" class="search-input" placeholder="Adaugă un comentariu...">
+            <button class="search-btn" onclick="addComment()">Trimite</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('home-page', this)"><span>🏠</span><span>Casa</span></button>
+        <button class="nav-item" onclick="switchTab('tiktok-page', this)"><span>📱</span><span>TikTok</span></button>
+        <button class="nav-item" onclick="switchTab('create-page', this)"><div class="create-btn">+</div></button>
+        <button class="nav-item" onclick="switchTab('youtube-page', this)"><span>▶️</span><span>YouTube</span></button>
+        <button class="nav-item" onclick="switchTab('profile-page', this)"><span>👤</span><span>Profil</span></button>
+        <button class="nav-item" id="adminNavItem" onclick="switchTab('admin-page', this)"><span>⚙️</span><span>Admin</span></button>
+    </div>
+
+    <script>
+        let videoList = [];
+        let activeVideoComments = null;
+        let isAdmin = false;
+        let isLive = false;
+        let mediaStream = null;
+        let myFollowers = 0;
+        let isFollowingAuthor = false;
+
+        // Parolă Admin actualizată
+        const ADMIN_PASSWORD = "Simpson 4 214 12";
+
+        function loginAdminPrompt() {
+            const pass = prompt("Introdu parola de Administrator:");
+            if(pass === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById('adminNavItem').style.display = 'flex';
+                alert("Te-ai autentificat cu succes ca Admin!");
+                renderVideos();
+            } else {
+                alert("Parolă incorectă!");
+            }
+        }
+
+        async function toggleCameraLive() {
+            const videoElem = document.getElementById('cameraPreview');
+            const btn = document.getElementById('startLiveBtn');
+
+            if (!isLive) {
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    videoElem.srcObject = mediaStream;
+                    videoElem.style.display = 'block';
+                    btn.innerText = '🔴 Oprește Live-ul';
+                    btn.style.backgroundColor = '#333';
+                    isLive = true;
+                    alert("Ești LIVE! Camera funcționează.");
+                } catch (err) {
+                    alert("Nu s-a putut accesa camera! Aplicația trebuie deschisă printr-un server (HTTPS sau Live Server) pentru a primi acces la cameră.");
+                }
+            } else {
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                }
+                videoElem.style.display = 'none';
+                btn.innerText = '🎥 Pornește Camera pentru Live';
+                btn.style.backgroundColor = '#e60000';
+                isLive = false;
+                alert("Transmisiunea Live a fost oprită.");
+            }
+        }
+
+        function switchTab(pageId, element) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function previewAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { document.getElementById('profileAvatar').style.backgroundImage = `url('${e.target.result}')`; }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewBanner(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { document.getElementById('profileBanner').style.backgroundImage = `url('${e.target.result}')`; }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveProfile() {
+            const newName = document.getElementById('editNameInput').value;
+            if (newName) {
+                document.getElementById('profileNameDisplay').innerText = newName;
+                document.getElementById('profileTag').innerText = `@${newName.toLowerCase().replace(/\s+/g, '_')}`;
+            }
+            alert('Profilul tău s-a salvat cu succes!');
+        }
+
+        function toggleFollow(btn) {
+            if (!isFollowingAuthor) {
+                myFollowers++;
+                btn.innerText = "Urmărești";
+                btn.classList.add('following');
+                isFollowingAuthor = true;
+            } else {
+                myFollowers--;
+                btn.innerText = "+ Urmărește";
+                btn.classList.remove('following');
+                isFollowingAuthor = false;
+            }
+            document.getElementById('followersCount').innerText = myFollowers;
+        }
+
+        function publishVideo(e) {
+            e.preventDefault();
+            const title = document.getElementById('videoTitle').value;
+            const type = document.getElementById('videoType').value;
+            const channel = document.getElementById('profileNameDisplay').innerText;
+            const fileInput = document.getElementById('videoFile');
+
+            if (!fileInput.files[0]) return;
+
+            const videoSrc = URL.createObjectURL(fileInput.files[0]);
+
+            videoList.unshift({ id: Date.now(), title, channel, type, src: videoSrc, likes: 0, comments: [] });
+            
+            document.getElementById('videoTitle').value = '';
+            fileInput.value = '';
+
+            renderVideos();
+            updateAdminStats();
+            
+            switchTab(type === 'tiktok' ? 'tiktok-page' : 'youtube-page', document.querySelectorAll('.nav-item')[type === 'tiktok' ? 1 : 3]);
+        }
+
+        function renderVideos() {
+            const youtubeGrid = document.getElementById('youtubeGrid');
+            const tiktokGrid = document.getElementById('tiktokGrid');
+            const homeGrid = document.getElementById('homeGrid');
+            
+            youtubeGrid.innerHTML = ''; tiktokGrid.innerHTML = ''; homeGrid.innerHTML = '';
+
+            videoList.forEach((v, index) => {
+                const banStyle = isAdmin ? 'display:block;' : 'display:none;';
+                const adminBanBtn = `<button class="ban-btn" style="${banStyle}" onclick="banVideo(${v.id})">🗑️ Șterge Video (Admin)</button>`;
+                const followBtnHtml = `<button class="follow-btn ${isFollowingAuthor ? 'following' : ''}" onclick="toggleFollow(this)">${isFollowingAuthor ? 'Urmărești' : '+ Urmărește'}</button>`;
+
+                const homeCard = document.createElement('div');
+                homeCard.className = 'video-card';
+                homeCard.innerHTML = `<video controls src="${v.src}"></video><div class="video-info"><strong>${v.title}</strong><p>@${v.channel} ${followBtnHtml}</p>${adminBanBtn}</div>`;
+                homeGrid.appendChild(homeCard);
+
+                if (v.type === 'youtube') {
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.innerHTML = `<video controls src="${v.src}"></video><div class="video-info"><strong>${v.title}</strong><p>@${v.channel} ${followBtnHtml}</p>${adminBanBtn}</div>`;
+                    youtubeGrid.appendChild(card);
+                } else if (v.type === 'tiktok') {
+                    const card = document.createElement('div');
+                    card.className = 'tiktok-card';
+                    card.innerHTML = `
+                        <video controls loop src="${v.src}"></video>
+                        <div class="tiktok-overlay"><h3>@${v.channel} ${followBtnHtml}</h3><p>${v.title}</p>${adminBanBtn}</div>
+                        <div class="tiktok-actions">
+                            <button class="action-btn" onclick="likeVideo(${index}, this)">❤️<span class="like-count">${v.likes}</span></button>
+                            <button class="action-btn" onclick="openComments(${index})">💬<span>${v.comments.length}</span></button>
+                        </div>
+                    `;
+                    tiktokGrid.appendChild(card);
+                }
+            });
+        }
+
+        function broadcastAdminMessage() {
+            const msg = document.getElementById('adminMessageInput').value;
+            const banner = document.getElementById('adminLiveBanner');
+            if (msg) {
+                banner.innerText = msg;
+                banner.style.display = 'block';
+            }
+        }
+
+        function clearAdminMessage() {
+            document.getElementById('adminLiveBanner').style.display = 'none';
+            document.getElementById('adminMessageInput').value = '';
+        }
+
+        function banVideo(videoId) {
+            videoList = videoList.filter(v => v.id !== videoId);
+            renderVideos();
+            updateAdminStats();
+            alert('Videoclipul a fost eliminat!');
+        }
+
+        function updateAdminStats() {
+            document.getElementById('totalVideosCount').innerText = videoList.length;
+        }
+
+        function likeVideo(index, btn) {
+            videoList[index].likes++;
+            btn.querySelector('.like-count').innerText = videoList[index].likes;
+        }
+
+        function openComments(index) {
+            activeVideoComments = index;
+            document.getElementById('commentModal').style.display = 'block';
+            renderComments();
+        }
+
+        function closeComments() { document.getElementById('commentModal').style.display = 'none'; }
+        
+        function renderComments() {
+            const list = document.getElementById('commentsList');
+            list.innerHTML = '';
+            videoList[activeVideoComments].comments.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'comment-item';
+                item.innerHTML = `<strong>Utilizator:</strong> ${c}`;
+                list.appendChild(item);
+            });
+        }
+
+        function addComment() {
+            const input = document.getElementById('newCommentInput');
+            if (!input.value) return;
+            videoList[activeVideoComments].comments.push(input.value);
+            input.value = '';
+            renderComments();
+            renderVideos();
+        }
+    </script>
+</body>
+</html>
